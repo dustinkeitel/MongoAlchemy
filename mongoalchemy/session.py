@@ -107,7 +107,7 @@ class Session(object):
         try:
             import motor
             conn = motor.MotorConnection(*args, **kwds)
-        except NameError:
+        except ImportError:
             conn = Connection(*args, **kwds)
         db = conn[database]
         return Session(db, timezone=timezone, safe=safe, cache_size=cache_size)
