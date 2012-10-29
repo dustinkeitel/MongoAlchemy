@@ -104,7 +104,11 @@ class Session(object):
             del kwds['safe']
         if timezone is not None:
             kwds['tz_aware'] = True
-        conn = Connection(*args, **kwds)
+        try:
+            import motor
+            conn = motor.MotorConnection(*args, **kwds)
+        except NameError:
+            conn = Connection(*args, **kwds)
         db = conn[database]
         return Session(db, timezone=timezone, safe=safe, cache_size=cache_size)
     
@@ -141,16 +145,16 @@ class Session(object):
             self.flush()
         self.db.connection.end_request()
     
-    def insert(self, item, safe=None):
+    def insert(self, item, safe=None, **kwargs):
         ''' Insert an item into the work queue and flushes.'''
-        self.add(item, safe=safe)
+        self.add(item, safe=safe, **kwargs)
     
-    def add(self, item, safe=None):
+    def add(self, item, safe=None, **kwargs):
         ''' Add an item into the queue of things to be inserted.  Does not flush.'''
         item._set_session(self)
         if safe is None:
             safe = self.safe
-        self.queue.append(SaveOp(self.transaction_id, self, item, safe))
+        self.queue.append(SaveOp(self.transaction_id, self, item, safe, **kwargs))
         # after the save op is recorded, the document has an _id and can be 
         # cached
         self.cache_write(item)

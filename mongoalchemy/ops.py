@@ -54,7 +54,7 @@ class UpdateDocumentOp(Operation):
 
     def execute(self):
         self.ensure_indexes()
-        return self.collection.update(self.db_key, self.dirty_ops, upsert=self.upsert, safe=self.safe)
+        return self.collection.update(self.db_key, self.dirty_ops, upsert=self.upsert, safe=self.safe, **kwargs)
 
 class UpdateOp(Operation):
     def __init__(self, trans_id, session, kind, safe, update_obj):
@@ -73,7 +73,7 @@ class UpdateOp(Operation):
 
 
 class SaveOp(Operation):
-    def __init__(self, trans_id, session, document, safe):
+    def __init__(self, trans_id, session, document, safe, **kwargs):
         self.session = session
         self.trans_id = trans_id
         self.data = document.wrap()
@@ -85,9 +85,11 @@ class SaveOp(Operation):
             document.mongo_id = self.data['_id']
         document._mark_clean()
 
+        self.kwargs = kwargs
+
     def execute(self):
         self.ensure_indexes()
-        return self.collection.save(self.data, safe=self.safe)
+        return self.collection.save(self.data, safe=self.safe, **self.kwargs)
 
 class RemoveOp(Operation):
     def __init__(self, trans_id, session, kind, safe, query):
